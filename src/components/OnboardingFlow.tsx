@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { markOnboardingCompleted } from "@/utils/session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -74,7 +75,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   const handleComplete = () => {
     // Guardar preferencias del usuario
     localStorage.setItem("userPreferences", JSON.stringify(data));
-    localStorage.setItem("onboardingCompleted", "true");
+    markOnboardingCompleted();
     
     toast({
       title: "¡Perfecto!",

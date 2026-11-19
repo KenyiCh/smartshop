@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { routeAfterLogin } from "@/utils/session";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -108,8 +109,8 @@ const Login = () => {
       description: "Has iniciado sesión exitosamente",
     });
     
-    // Siempre ir a la página principal al iniciar sesión
-    navigate("/");
+    // La primera vez de cada usuario va al formulario de bienvenida
+    navigate(routeAfterLogin(user.email));
     setIsLoading(false);
   };
 
@@ -221,8 +222,8 @@ const Login = () => {
                      provider === 'microsoft' ? 'Microsoft' : 'Apple'}`,
       });
       
-      // Los usuarios de redes sociales van directamente a la página principal
-      navigate("/");
+      // La primera vez de cada usuario (también con Google, Microsoft o Apple) va al formulario de bienvenida
+      navigate(routeAfterLogin(socialUser.email));
     } catch (error) {
       toast({
         title: "Error",

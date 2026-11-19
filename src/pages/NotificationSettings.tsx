@@ -1,6 +1,19 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { STORES } from "@/data/products";
+import { formatPrice } from "@/utils/priceUtils";
+import {
+  activatePremiumTrial,
+  cancelPremiumTrial,
+  CHANNEL_LABELS,
+  deleteAlert,
+  FREQUENCY_LABELS,
+  getAlerts,
+  isPremium,
+  type PriceAlert,
+} from "@/utils/premium";
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Bell, BellOff, Mail, Smartphone, Monitor, Clock, AlertTriangle, Tag, Store, Percent, RotateCcw, Save } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Mail, Smartphone, Monitor, Clock, AlertTriangle, Tag, Store, Percent, RotateCcw, Save, Crown, BellRing, Trash2, Info } from "lucide-react";
 
 interface NotificationSettings {
   emailNotifications: boolean;
@@ -42,7 +55,7 @@ const defaultSettings: NotificationSettings = {
     specialOffers: true,
   },
   selectedWishlists: [1, 2],
-  selectedStores: [1, 2, 3, 4, 5],
+  selectedStores: [1, 2, 3, 4, 5, 6],
   minDiscountPercentage: 10,
 };
 
@@ -51,19 +64,33 @@ const wishlists = [
   { id: 2, name: "Hogar" },
 ];
 
-const stores = [
-  { id: 1, name: "Ripley" },
-  { id: 2, name: "Saga Falabella" },
-  { id: 3, name: "Plaza Vea" },
-  { id: 4, name: "Oechsle" },
-  { id: 5, name: "Mercado Libre" },
-];
+const stores = STORES.map((name, i) => ({ id: i + 1, name }));
 
 const NotificationSettings = () => {
   const [settings, setSettings] = useState<NotificationSettings>(defaultSettings);
   const [allNotificationsEnabled, setAllNotificationsEnabled] = useState(true);
+  const [premium, setPremium] = useState(isPremium());
+  const [alerts, setAlerts] = useState<PriceAlert[]>(getAlerts());
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const handleActivatePremium = () => {
+    activatePremiumTrial();
+    setPremium(true);
+    toast({ title: "Prueba Premium activada (simulada)", description: "En el prototipo no se realiza ningún cobro." });
+  };
+
+  const handleCancelPremium = () => {
+    cancelPremiumTrial();
+    setPremium(false);
+    toast({ title: "Prueba Premium cancelada", description: "Tus alertas guardadas se conservan, pero quedan en pausa." });
+  };
+
+  const handleDeleteAlert = (id: string) => {
+    deleteAlert(id);
+    setAlerts(getAlerts());
+    toast({ title: "Alerta eliminada", description: "Borramos el producto, el precio objetivo y el canal de esta alerta." });
+  };
 
   const handleSaveSettings = () => {
     console.log("Guardando configuraciones:", settings);
@@ -166,6 +193,71 @@ const NotificationSettings = () => {
         </div>
 
         <div className="max-w-4xl mx-auto space-y-6">
+          {/* Alertas premium a medida */}
+          <Card className="border-2 border-amber-400/60 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-amber-50 to-amber-100/60">
+              <CardTitle className="flex flex-wrap items-center gap-2 text-xl">
+                <BellRing className="h-6 w-6 text-primary" />
+                Mis alertas de precio
+                <Badge className="bg-amber-500 hover:bg-amber-500 text-white">
+                  <Crown className="h-3 w-3 mr-1" /> Premium
+                </Badge>
+              </CardTitle>
+              <CardDescription className="text-base">
+                Precio objetivo, descuento mínimo, tiendas, canal y frecuencia para cada producto.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
+              {!premium ? (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    Activa Premium para crear alertas a medida desde la página de cada producto.
+                  </p>
+                  <Button onClick={handleActivatePremium}>
+                    <Crown className="h-4 w-4 mr-2" /> Probar Premium gratis
+                  </Button>
+                </div>
+              ) : alerts.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Aún no tienes alertas. Abre un producto y usa <strong>Crear alerta</strong>.{" "}
+                  <Link to="/products" className="underline">Ver productos</Link>
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {alerts.map((a) => (
+                    <div key={a.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border bg-muted/30">
+                      <div className="space-y-1">
+                        <Link to={`/product/${a.productId}`} className="font-semibold hover:underline">
+                          {a.productName}
+                        </Link>
+                        <div className="text-sm text-muted-foreground">
+                          Avisar si baja a <strong>S/ {formatPrice(a.targetPrice)}</strong> o menos · descuento real mínimo {a.minDiscount}%
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {a.stores.join(", ")} · {CHANNEL_LABELS[a.channel]} · {FREQUENCY_LABELS[a.frequency]}
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => handleDeleteAlert(a.id)}>
+                        <Trash2 className="h-4 w-4 mr-2" /> Eliminar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                <span className="flex gap-2">
+                  <Info className="h-4 w-4 shrink-0" />
+                  Prototipo: Premium es simulado y las alertas no se envían. Se guardan solo en este navegador.
+                </span>
+                {premium && (
+                  <Button variant="ghost" size="sm" onClick={handleCancelPremium}>
+                    Cancelar prueba Premium
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Toggle general de notificaciones */}
           <Card className="border-2 border-primary/20 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">

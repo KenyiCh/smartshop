@@ -4,47 +4,52 @@ import Navigation from "@/components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Laptop, Smartphone, Headphones, Watch, Monitor } from "lucide-react";
+import { products } from "@/data/products";
+
+const toSlug = (name: string) =>
+  name.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/\s+/g, "-");
+const countFor = (name: string) => products.filter((p) => p.category === toSlug(name)).length;
 
 const categories = [
   { 
     name: "Celulares", 
     icon: Smartphone, 
-    count: 189, 
+     
     description: "Smartphones de marcas reconocidas",
     trending: true
   },
   { 
     name: "Monitores", 
     icon: Monitor, 
-    count: 134, 
+     
     description: "Pantallas para gaming, trabajo y diseño",
     trending: false
   },
   { 
     name: "Smartwatches", 
     icon: Watch, 
-    count: 78, 
+     
     description: "Relojes inteligentes y fitness trackers",
     trending: true
   },
   { 
     name: "Audífonos", 
     icon: Headphones, 
-    count: 156, 
+     
     description: "Auriculares con y sin cable, gaming",
     trending: false
   },
   { 
     name: "PCs de Marca", 
     icon: Monitor, 
-    count: 87, 
+     
     description: "Computadoras de escritorio ya armadas",
     trending: true
   },
   { 
     name: "Laptops", 
     icon: Laptop, 
-    count: 245, 
+     
     description: "Computadoras portátiles de todas las marcas",
     trending: true
   }
@@ -67,7 +72,7 @@ const Categories = () => {
           {categories.map((category) => (
             <Link 
               key={category.name} 
-              to={`/category/${category.name.toLowerCase()}`}
+              to={`/products?category=${toSlug(category.name)}`}
               className="group"
             >
               <Card className="hover:shadow-lg transition-all duration-300 group-hover:scale-105 h-full">
@@ -90,7 +95,7 @@ const Categories = () => {
                     {category.description}
                   </p>
                   <Badge variant="outline" className="text-xs">
-                    {category.count} productos
+                    {countFor(category.name)} {countFor(category.name) === 1 ? "producto" : "productos"}
                   </Badge>
                 </CardContent>
               </Card>

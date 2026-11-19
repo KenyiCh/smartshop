@@ -18,6 +18,7 @@ import Admin from "./pages/Admin";
 import SearchHistory from "./pages/SearchHistory";
 import ReviewHistory from "./pages/ReviewHistory";
 import Onboarding from "./pages/Onboarding";
+import Plans from "./pages/Plans";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/search-history" element={<SearchHistory />} />
           <Route path="/review-history" element={<ReviewHistory />} />
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/planes" element={<Plans />} />
           <Route path="/category/:category" element={<Index />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

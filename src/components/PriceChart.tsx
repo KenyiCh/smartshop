@@ -1,73 +1,60 @@
-
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from 'react';
-import { formatPrice } from '@/utils/priceUtils';
+import { useState } from "react";
+import { formatPrice } from "@/utils/priceUtils";
+import type { PricePoint } from "@/data/products";
 
-const allData = {
-  days: [
-    { date: '2024-06-10', price: 7596.50 },
-    { date: '2024-06-11', price: 7620.25 },
-    { date: '2024-06-12', price: 7580.75 },
-    { date: '2024-06-13', price: 7615.00 },
-    { date: '2024-06-14', price: 7590.50 },
-    { date: '2024-06-15', price: 7605.25 },
-    { date: '2024-06-16', price: 7596.50 },
-  ],
-  weeks: [
-    { date: 'Sem 1 Jun', price: 7740.00 },
-    { date: 'Sem 2 Jun', price: 7680.50 },
-    { date: 'Sem 3 Jun', price: 7620.25 },
-    { date: 'Sem 4 Jun', price: 7596.50 },
-  ],
-  months: [
-    { date: '2023-10', price: 8740.99 },
-    { date: '2023-11', price: 8359.75 },
-    { date: '2023-12', price: 7977.50 },
-    { date: '2024-01', price: 7596.50 },
-    { date: '2024-02', price: 7787.25 },
-    { date: '2024-03', price: 7596.50 },
-  ]
-};
+interface PriceChartProps {
+  data: PricePoint[];
+}
 
-const PriceChart = () => {
-  const [timeRange, setTimeRange] = useState<'days' | 'weeks' | 'months'>('months');
+const RANGES = {
+  "1m": { label: "Último mes", weeks: 5 },
+  "3m": { label: "Últimos 3 meses", weeks: 14 },
+} as const;
 
-  const data = allData[timeRange];
+type Range = keyof typeof RANGES;
+
+const shortDate = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString("es-PE", { day: "numeric", month: "short" });
+
+const PriceChart = ({ data }: PriceChartProps) => {
+  const [range, setRange] = useState<Range>("3m");
+  const shown = data.slice(-RANGES[range].weeks).map((p) => ({ ...p, label: shortDate(p.date) }));
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Evolución de Precios</h3>
-        <Select value={timeRange} onValueChange={(value: 'days' | 'weeks' | 'months') => setTimeRange(value)}>
-          <SelectTrigger className="w-[140px]">
+      <div className="flex flex-wrap gap-2 justify-between items-center">
+        <h3 className="text-lg font-semibold">Mejor precio por semana</h3>
+        <Select value={range} onValueChange={(v: Range) => setRange(v)}>
+          <SelectTrigger className="w-[170px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="days">Últimos días</SelectItem>
-            <SelectItem value="weeks">Semanas</SelectItem>
-            <SelectItem value="months">Meses</SelectItem>
+            {Object.entries(RANGES).map(([k, r]) => (
+              <SelectItem key={k} value={k}>
+                {r.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
-      
+
       <div className="w-full h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
+          <LineChart data={shown} margin={{ left: 8, right: 8 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip 
-              formatter={(value) => [`S/ ${formatPrice(Number(value))}`, 'Precio']}
-              labelFormatter={(label) => `Período: ${label}`}
+            <XAxis dataKey="label" />
+            <YAxis
+              domain={["dataMin - 100", "dataMax + 100"]}
+              tickFormatter={(v) => `S/ ${formatPrice(Math.round(Number(v)))}`}
+              width={80}
             />
-            <Line 
-              type="monotone" 
-              dataKey="price" 
-              stroke="#8884d8" 
-              strokeWidth={2}
-              dot={{ fill: '#8884d8' }}
+            <Tooltip
+              formatter={(value) => [`S/ ${formatPrice(Number(value))}`, "Mejor precio"]}
+              labelFormatter={(label) => `Semana del ${label}`}
             />
+            <Line type="monotone" dataKey="price" stroke="hsl(var(--primary))" strokeWidth={2} dot />
           </LineChart>
         </ResponsiveContainer>
       </div>

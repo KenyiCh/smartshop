@@ -11,61 +11,22 @@ import ProductCard from "@/components/ProductCard";
 import RecommendationsSection from "@/components/RecommendationsSection";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { getProductById, products, toCardProduct } from "@/data/products";
+import { hasCompletedOnboarding } from "@/utils/session";
 
-const featuredProducts = [
-  {
-    id: 1,
-    name: "MacBook Pro 14 M3",
-    category: "laptop",
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500",
-    minPrice: 7596.50,
-    maxPrice: 9495.99,
-    rating: 4.8,
-    stores: 5,
-    trend: "down" as const
-  },
-  {
-    id: 2,
-    name: "iPhone 15 Pro",
-    category: "smartphone",
-    image: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=500",
-    minPrice: 3796.75,
-    maxPrice: 4556.25,
-    rating: 4.6,
-    stores: 8,
-    trend: "up" as const
-  },
-  {
-    id: 3,
-    name: "Sony WH-1000XM5",
-    category: "headphones",
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500",
-    minPrice: 1326.99,
-    maxPrice: 1516.50,
-    rating: 4.7,
-    stores: 6,
-    trend: "stable" as const
-  },
-  {
-    id: 4,
-    name: "Apple Watch Series 9",
-    category: "smartwatch",
-    image: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=500",
-    minPrice: 1516.00,
-    maxPrice: 3036.75,
-    rating: 4.5,
-    stores: 7,
-    trend: "down" as const
-  }
-];
+// Destacados: laptops para el guion de Black Friday y algunos de otras categorías
+const featuredProducts = [9, 1, 10, 2]
+  .map((id) => getProductById(id))
+  .filter((p): p is NonNullable<typeof p> => !!p)
+  .map(toCardProduct);
 
 const categories = [
-  { name: "Celulares", icon: Smartphone, count: 189 },
-  { name: "Monitores", icon: Monitor, count: 134 },
-  { name: "Smartwatches", icon: Watch, count: 78 },
-  { name: "Audífonos", icon: Headphones, count: 156 },
-  { name: "PCs de Marca", icon: Monitor, count: 87 },
-  { name: "Laptops", icon: Laptop, count: 245 }
+  { name: "Celulares", slug: "celulares", icon: Smartphone, count: products.filter((p) => p.category === "celulares").length },
+  { name: "Monitores", slug: "monitores", icon: Monitor, count: products.filter((p) => p.category === "monitores").length },
+  { name: "Smartwatches", slug: "smartwatches", icon: Watch, count: products.filter((p) => p.category === "smartwatches").length },
+  { name: "Audífonos", slug: "audifonos", icon: Headphones, count: products.filter((p) => p.category === "audifonos").length },
+  { name: "PCs de Marca", slug: "pcs-de-marca", icon: Monitor, count: products.filter((p) => p.category === "pcs-de-marca").length },
+  { name: "Laptops", slug: "laptops", icon: Laptop, count: products.filter((p) => p.category === "laptops").length }
 ];
 
 const Index = () => {
@@ -78,13 +39,12 @@ const Index = () => {
   useEffect(() => {
     const checkUserSession = () => {
       const userData = localStorage.getItem("user");
-      const onboardingCompleted = localStorage.getItem("onboardingCompleted");
       const isUserLoggedIn = !!userData;
       
       setIsLoggedIn(isUserLoggedIn);
       
       // Check if user is logged in but hasn't completed onboarding
-      if (isUserLoggedIn && !onboardingCompleted) {
+      if (isUserLoggedIn && !hasCompletedOnboarding()) {
         setShouldShowOnboarding(true);
       }
     };
@@ -153,8 +113,8 @@ const Index = () => {
             SmartShop
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Compara precios de productos tecnológicos de comunicación en tiempo real. 
-            Encuentra las mejores ofertas de celulares, laptops, monitores y más.
+            Compara precios de tecnología en tiendas oficiales del Perú en una sola vista.
+            Revisa el historial para saber si el descuento es real antes de comprar.
           </p>
           
           {/* Search Bar */}
@@ -193,12 +153,12 @@ const Index = () => {
           <h2 className="text-3xl font-bold text-center mb-12">Categorías</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {categories.map((category) => (
-              <Link key={category.name} to={`/category/${category.name.toLowerCase()}`}>
+              <Link key={category.name} to={`/products?category=${category.slug}`}>
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer text-center">
                   <CardContent className="p-6">
                     <category.icon className="h-12 w-12 mx-auto mb-4 text-primary" />
                     <h3 className="font-semibold mb-2">{category.name}</h3>
-                    <p className="text-sm text-muted-foreground">{category.count} productos</p>
+                    <p className="text-sm text-muted-foreground">{category.count} {category.count === 1 ? "producto" : "productos"}</p>
                   </CardContent>
                 </Card>
               </Link>

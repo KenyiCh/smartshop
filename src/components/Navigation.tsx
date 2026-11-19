@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, User, Menu, X, ShoppingCart, Bell, LogOut, Settings } from "lucide-react";
+import { Heart, User, Menu, X, ShoppingCart, Bell, LogOut, Settings, Crown } from "lucide-react";
+import { isPremium, PREMIUM_EVENT } from "@/utils/premium";
 import { useToast } from "@/hooks/use-toast";
 import { isSessionValid, clearSecureStorage } from "@/utils/security";
 
@@ -16,6 +17,7 @@ const Navigation = () => {
     role?: string;
     sessionToken?: string;
   } | null>(null);
+  const [premium, setPremium] = useState(isPremium());
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -23,6 +25,14 @@ const Navigation = () => {
   useEffect(() => {
     checkUserSession();
   }, []);
+
+  // Premium es por usuario: se recalcula al cambiar la sesión o el plan.
+  useEffect(() => {
+    const sync = () => setPremium(isPremium());
+    sync();
+    window.addEventListener(PREMIUM_EVENT, sync);
+    return () => window.removeEventListener(PREMIUM_EVENT, sync);
+  }, [user]);
 
   const checkUserSession = () => {
     const userData = localStorage.getItem("user");
@@ -75,8 +85,24 @@ const Navigation = () => {
   const navigationItems = [
     { name: "Inicio", path: "/" },
     { name: "Productos", path: "/products" },
-    { name: "Categorías", path: "/categories" }
+    { name: "Categorías", path: "/categories" },
+    // La pestaña de planes solo aparece para quien no es Premium
+    ...(!premium ? [{ name: "Planes", path: "/planes" }] : []),
   ];
+
+  const planBadge = premium ? (
+    <Link to="/planes" title="Tu plan: Premium">
+      <Badge className="bg-amber-500 hover:bg-amber-600 text-white gap-1">
+        <Crown className="h-3 w-3" /> Premium
+      </Badge>
+    </Link>
+  ) : (
+    <Link to="/planes" title="Tu plan: Gratis. Ver planes">
+      <Badge variant="outline" className="gap-1 text-muted-foreground">
+        Gratis
+      </Badge>
+    </Link>
+  );
 
   return (
     <nav className="bg-background border-b sticky top-0 z-50 py-[2px]">
@@ -89,7 +115,7 @@ const Navigation = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8 flex-1 justify-center">
+          <div className="hidden lg:flex items-center space-x-8 flex-1 justify-center">
             {navigationItems.map(item => (
               <Link 
                 key={item.name} 
@@ -106,7 +132,7 @@ const Navigation = () => {
           </div>
 
           {/* User Actions */}
-          <div className="hidden md:flex items-center space-x-4 flex-shrink-0">
+          <div className="hidden lg:flex items-center space-x-4 flex-shrink-0">
             {user ? (
               <>
                 <Link to="/wishlist">
@@ -133,6 +159,7 @@ const Navigation = () => {
                     {user.name}
                   </Button>
                 </Link>
+                {planBadge}
                 
                 {isAdmin && (
                   <Link to="/admin">
@@ -159,7 +186,7 @@ const Navigation = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            className="md:hidden" 
+            className="lg:hidden" 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -168,7 +195,7 @@ const Navigation = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden border-t py-4">
+          <div className="lg:hidden border-t py-4">
             <div className="flex flex-col space-y-4">
               {navigationItems.map(item => (
                 <Link 
@@ -202,12 +229,15 @@ const Navigation = () => {
                   </div>
                   
                   <div className="flex flex-col space-y-2 pt-4 border-t">
-                    <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
-                      <Button variant="ghost" size="sm">
-                        <User className="h-5 w-5 mr-2" />
-                        Perfil
-                      </Button>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
+                        <Button variant="ghost" size="sm">
+                          <User className="h-5 w-5 mr-2" />
+                          Perfil
+                        </Button>
+                      </Link>
+                      <span onClick={() => setIsMenuOpen(false)}>{planBadge}</span>
+                    </div>
                     {isAdmin && (
                       <Link to="/admin" onClick={() => setIsMenuOpen(false)}>
                         <Button variant="ghost" size="sm">

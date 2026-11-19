@@ -19,7 +19,8 @@ interface Product {
   maxPrice: number;
   rating: number;
   stores: number;
-  trend: "up" | "down" | "stable";
+  /** Variación del mejor precio en las últimas 4 semanas (%). */
+  trendPct: number;
 }
 
 interface ProductCardProps {
@@ -44,23 +45,25 @@ const ProductCard = ({ product, isLoggedIn = false }: ProductCardProps) => {
     { id: 2, name: "Hogar", itemCount: 1 },
   ];
 
+  const trend = product.trendPct > 0 ? "up" : product.trendPct < 0 ? "down" : "stable";
+
   const getTrendIcon = () => {
-    switch (product.trend) {
+    switch (trend) {
       case "up":
         return <TrendingUp className="h-4 w-4 text-red-500" />;
       case "down":
-        return <TrendingDown className="h-4 w-4 text-green-500" />;
+        return <TrendingDown className="h-4 w-4 text-green-600" />;
       default:
         return <Minus className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getTrendColor = () => {
-    switch (product.trend) {
+    switch (trend) {
       case "up":
         return "text-red-500";
       case "down":
-        return "text-green-500";
+        return "text-green-600";
       default:
         return "text-muted-foreground";
     }
@@ -136,21 +139,24 @@ const ProductCard = ({ product, isLoggedIn = false }: ProductCardProps) => {
 
             <div className="flex items-center justify-between">
               <div>
+                <div className="text-xs text-muted-foreground">Mejor precio final</div>
                 <div className="text-2xl font-bold text-primary">
                   S/ {formatPrice(product.minPrice)}
                 </div>
                 {product.minPrice !== product.maxPrice && (
-                  <div className="text-sm text-muted-foreground line-through">
-                    S/ {formatPrice(product.maxPrice)}
+                  <div className="text-xs text-muted-foreground">
+                    hasta S/ {formatPrice(product.maxPrice)} en otras tiendas
                   </div>
                 )}
               </div>
-              <div className={`flex items-center space-x-1 ${getTrendColor()}`}>
+              <div
+                className={`flex items-center space-x-1 ${getTrendColor()}`}
+                title="Variación del mejor precio en las últimas 4 semanas"
+              >
                 {getTrendIcon()}
                 <span className="text-sm font-medium">
-                  {product.trend === "up" && "+5%"}
-                  {product.trend === "down" && "-8%"}
-                  {product.trend === "stable" && "0%"}
+                  {product.trendPct > 0 ? "+" : ""}
+                  {product.trendPct}%
                 </span>
               </div>
             </div>

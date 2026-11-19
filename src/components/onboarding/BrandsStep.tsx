@@ -3,74 +3,64 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { OnboardingData } from "../OnboardingFlow";
+import {
+  siApple,
+  siAsus,
+  siDell,
+  siHp,
+  siHuawei,
+  siLenovo,
+  siLg,
+  siRazer,
+  siSamsung,
+  siSony,
+  siXiaomi,
+  type SimpleIcon,
+} from "simple-icons";
 
 interface BrandsStepProps {
   data: OnboardingData;
   onUpdate: (data: Partial<OnboardingData>) => void;
 }
 
-const brands = [
-  { 
-    id: "apple", 
-    name: "Apple", 
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Apple-logo.png/240px-Apple-logo.png"
-  },
-  { 
-    id: "samsung", 
-    name: "Samsung", 
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Samsung_Logo.svg/240px-Samsung_Logo.svg.png"
-  },
-  { 
-    id: "sony", 
-    name: "Sony", 
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Sony_logo.svg/240px-Sony_logo.svg.png"
-  },
-  { 
-    id: "lg", 
-    name: "LG", 
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/LG_logo_%282015%29.svg/240px-LG_logo_%282015%29.svg.png"
-  },
-  { 
-    id: "xiaomi", 
-    name: "Xiaomi", 
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Xiaomi_logo.svg/240px-Xiaomi_logo.svg.png"
-  },
-  { 
-    id: "huawei", 
-    name: "Huawei", 
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Huawei_Standard_logo.svg/240px-Huawei_Standard_logo.svg.png"
-  },
-  { 
-    id: "dell", 
-    name: "Dell", 
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Dell_Logo.svg/240px-Dell_Logo.svg.png"
-  },
-  { 
-    id: "hp", 
-    name: "HP", 
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/HP_logo_2012.svg/240px-HP_logo_2012.svg.png"
-  },
-  { 
-    id: "lenovo", 
-    name: "Lenovo", 
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Lenovo_logo_2015.svg/240px-Lenovo_logo_2015.svg.png"
-  },
-  { 
-    id: "asus", 
-    name: "ASUS", 
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/ASUS_Logo.svg/240px-ASUS_Logo.svg.png"
-  },
-  { 
-    id: "logitech", 
-    name: "Logitech", 
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Logitech_logo_2015.svg/240px-Logitech_logo_2015.svg.png"
-  },
-  { 
-    id: "razer", 
-    name: "Razer", 
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Razer_Logo.svg/240px-Razer_Logo.svg.png"
-  }
+// Logos incluidos en la app (paquete simple-icons): no dependen de enlaces externos.
+// Las marcas sin ícono muestran su inicial.
+const brands: { id: string; name: string; icon?: SimpleIcon }[] = [
+  { id: "apple", name: "Apple", icon: siApple },
+  { id: "samsung", name: "Samsung", icon: siSamsung },
+  { id: "sony", name: "Sony", icon: siSony },
+  { id: "lg", name: "LG", icon: siLg },
+  { id: "xiaomi", name: "Xiaomi", icon: siXiaomi },
+  { id: "huawei", name: "Huawei", icon: siHuawei },
+  { id: "dell", name: "Dell", icon: siDell },
+  { id: "hp", name: "HP", icon: siHp },
+  { id: "lenovo", name: "Lenovo", icon: siLenovo },
+  { id: "asus", name: "ASUS", icon: siAsus },
+  { id: "logitech", name: "Logitech" },
+  { id: "razer", name: "Razer", icon: siRazer },
 ];
+
+/** Usa el color de la marca salvo que sea muy claro (p. ej. blanco), que no se vería. */
+const iconColor = (hex: string) => {
+  const n = parseInt(hex, 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? "currentColor" : `#${hex}`;
+};
+
+const BrandLogo = ({ name, icon }: { name: string; icon?: SimpleIcon }) =>
+  icon ? (
+    <svg role="img" aria-label={name} viewBox="0 0 24 24" className="w-12 h-12 text-foreground">
+      <path d={icon.path} fill={iconColor(icon.hex)} />
+    </svg>
+  ) : (
+    <div
+      aria-label={name}
+      className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold"
+    >
+      {name.charAt(0)}
+    </div>
+  );
 
 const BrandsStep = ({ data, onUpdate }: BrandsStepProps) => {
   const [selectedBrands, setSelectedBrands] = useState<string[]>(data.brands);
@@ -106,14 +96,7 @@ const BrandsStep = ({ data, onUpdate }: BrandsStepProps) => {
           >
             <CardContent className="p-3 text-center">
               <div className="flex flex-col items-center space-y-2">
-                <img 
-                  src={brand.logo} 
-                  alt={brand.name}
-                  className="w-8 h-8 object-contain"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
+                <BrandLogo name={brand.name} icon={brand.icon} />
                 <span className="text-sm font-medium">{brand.name}</span>
                 <Checkbox
                   checked={selectedBrands.includes(brand.id)}
@@ -127,7 +110,7 @@ const BrandsStep = ({ data, onUpdate }: BrandsStepProps) => {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Seleccionadas: {selectedBrands.length} marcas
+        Seleccionadas: {selectedBrands.length} {selectedBrands.length === 1 ? "marca" : "marcas"}
       </p>
     </div>
   );
